@@ -26,13 +26,16 @@ export function AuthForm() {
           method: "POST",
           headers: {
             "apikey": SUPABASE_KEY!,
+            "Authorization": `Bearer ${SUPABASE_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, password }),
         })
-        const data = await res.json()
+        const text = await res.text()
+        let data
+        try { data = JSON.parse(text) } catch { data = { msg: text.slice(0, 100) } }
         if (!res.ok) {
-          setMessage("Lỗi: " + (data.msg || "Đăng ký thất bại"))
+          setMessage("Lỗi: " + (data.msg || data.message || "Đăng ký thất bại"))
         } else {
           setMessage("Đăng ký thành công! Kiểm tra email để xác nhận.")
         }
@@ -41,15 +44,17 @@ export function AuthForm() {
           method: "POST",
           headers: {
             "apikey": SUPABASE_KEY!,
+            "Authorization": `Bearer ${SUPABASE_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, password }),
         })
-        const data = await res.json()
+        const text = await res.text()
+        let data
+        try { data = JSON.parse(text) } catch { data = { error_description: text.slice(0, 100) } }
         if (!res.ok) {
-          setMessage("Lỗi: " + (data.error_description || "Đăng nhập thất bại"))
+          setMessage("Lỗi: " + (data.error_description || data.message || "Đăng nhập thất bại"))
         } else {
-          // Lưu session và redirect
           localStorage.setItem("supabase_auth_token", JSON.stringify(data))
           window.location.href = "/idea-bank"
         }
