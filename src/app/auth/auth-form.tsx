@@ -1,10 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { createClient } from "@/lib/supabase/client"
 
 export function AuthForm() {
   const [mode, setMode] = useState<"login" | "signup">("login")
@@ -12,16 +11,26 @@ export function AuthForm() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
+  const supabaseRef = useRef<any>(null)
 
-  const supabase = createClient()
+  useEffect(() => {
+    // Lazy load supabase client chỉ ở browser
+    import("@/lib/supabase/client").then((mod) => {
+      supabaseRef.current = mod.createClient()
+    })
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!supabaseRef.current) {
+      setMessage("Đang khởi động...")
+      return
+    }
     setLoading(true)
     setMessage("")
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabaseRef.current.auth.signUp({
         email,
         password,
       })
@@ -31,7 +40,7 @@ export function AuthForm() {
         setMessage("Đăng ký thành công! Kiểm tra email để xác nhận.")
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabaseRef.current.auth.signInWithPassword({
         email,
         password,
       })
