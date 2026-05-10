@@ -1,9 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 export function AuthForm() {
   const [mode, setMode] = useState<"login" | "signup">("login")
@@ -11,46 +14,48 @@ export function AuthForm() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
-  const supabaseRef = useRef<any>(null)
-
-  useEffect(() => {
-    // Tạo supabase client inline chỉ ở browser
-    const { createClient } = require("@supabase/supabase-js")
-    supabaseRef.current = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!supabaseRef.current) {
-      setMessage("Đang khởi động...")
-      return
-    }
     setLoading(true)
     setMessage("")
 
-    if (mode === "signup") {
-      const { error } = await supabaseRef.current.auth.signUp({
-        email,
-        password,
-      })
-      if (error) {
-        setMessage("Lỗi: " + error.message)
+    try {
+      if (mode === "signup") {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_KEY!,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          setMessage("Lỗi: " + (data.msg || "Đăng ký thất bại"))
+        } else {
+          setMessage("Đăng ký thành công! Kiểm tra email để xác nhận.")
+        }
       } else {
-        setMessage("Đăng ký thành công! Kiểm tra email để xác nhận.")
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_KEY!,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          setMessage("Lỗi: " + (data.error_description || "Đăng nhập thất bại"))
+        } else {
+          // Lưu session và redirect
+          localStorage.setItem("supabase_auth_token", JSON.stringify(data))
+          window.location.href = "/idea-bank"
+        }
       }
-    } else {
-      const { error } = await supabaseRef.current.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) {
-        setMessage("Lỗi: " + error.message)
-      } else {
-        window.location.href = "/idea-bank"
-      }
+    } catch (err: any) {
+      setMessage("Lỗi kết nối: " + err.message)
     }
 
     setLoading(false)
