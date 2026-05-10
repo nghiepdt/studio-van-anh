@@ -295,8 +295,8 @@ CREATE INDEX idx_calendar_slot_date ON calendar_slots(slot_date);
 CREATE INDEX idx_images_post_id ON images(post_id);
 CREATE INDEX idx_performance_post_id ON performance_metrics(post_id);
 
--- Full-text search on ideas
-CREATE INDEX idx_ideas_search ON ideas USING gin(to_tsvector('vietnamese', title || ' ' || COALESCE(content, '')));
+-- Full-text search on ideas (simple config cho English/Vietnamese basic)
+CREATE INDEX idx_ideas_search ON ideas USING gin(to_tsvector('simple', title || ' ' || COALESCE(content, '')));
 
 -- ============================================
 -- SEED DATA
