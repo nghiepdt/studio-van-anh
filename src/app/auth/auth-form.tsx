@@ -20,14 +20,9 @@ export function AuthForm() {
     setLoading(true)
     setMessage("")
 
-    console.log("SUPABASE_URL:", SUPABASE_URL)
-    console.log("SUPABASE_KEY length:", SUPABASE_KEY?.length)
-
     try {
       if (mode === "signup") {
-        const url = `${SUPABASE_URL}/auth/v1/signup`
-        console.log("Fetching:", url)
-        const res = await fetch(url, {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
           method: "POST",
           headers: {
             "apikey": SUPABASE_KEY!,
