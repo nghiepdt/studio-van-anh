@@ -1,0 +1,31 @@
+name: Backup Supabase Database
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Mỗi Chủ Nhật 2AM UTC
+  workflow_dispatch:  # Cho phép chạy thủ công
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Backup database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          pg_dump "$SUPABASE_DB_URL" --clean --if-exists > "backup_${TIMESTAMP}.sql"
+          echo "Backup created: backup_${TIMESTAMP}.sql"
+          ls -lh "backup_${TIMESTAMP}.sql"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_number }}
+          path: backup_*.sql
+          retention-days: 30
