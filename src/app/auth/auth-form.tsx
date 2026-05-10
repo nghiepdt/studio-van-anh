@@ -14,10 +14,12 @@ export function AuthForm() {
   const supabaseRef = useRef<any>(null)
 
   useEffect(() => {
-    // Lazy load supabase client chỉ ở browser
-    import("@/lib/supabase/client").then((mod) => {
-      supabaseRef.current = mod.createClient()
-    })
+    // Tạo supabase client inline chỉ ở browser
+    const { createClient } = require("@supabase/supabase-js")
+    supabaseRef.current = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
